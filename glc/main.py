@@ -14,6 +14,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.exceptions import RequestValidationError 
+from fastapi.responses import JSONResponse 
 
 ROOT = Path(__file__).parent
 load_dotenv(ROOT.parent / ".env")  # repo .env, if present
@@ -75,6 +77,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GLC v1 — Gateway for LLMs and Channels", lifespan=lifespan)
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"error": "Invalid request format. Please check your input."}
+    )
+    
 app.include_router(chat_route.router)
 app.include_router(transcribe_route.router)
 app.include_router(speak_route.router)
