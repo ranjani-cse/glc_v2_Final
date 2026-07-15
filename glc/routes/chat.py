@@ -645,8 +645,13 @@ async def chat(req: ChatRequest, request: Request):
 
 
 @router.post("/v1/chat/batch")
-async def chat_batch(req: BatchChatRequest, request: Request):
-    sem = _asyncio.Semaphore(max(1, req.max_concurrency))
+async def chat_batch(req: BatchChatRequest):
+    try:
+        results = await _asyncio.gather(*[_one(c) for c in req.calls])
+        return results
+    except Exception as e:
+        raise HTTPException(400, "Invalid request format. Please check your input.")
+
 
     async def _one(call: ChatRequest):
         async with sem:
