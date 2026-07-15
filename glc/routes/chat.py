@@ -19,7 +19,8 @@ from typing import Any
 
 import yaml
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponsefrom fastapi.exceptions import RequestValidationError  
+from fastapi.responses import JSONResponse  
 from jsonschema import Draft202012Validator, ValidationError
 
 from glc import db
@@ -652,7 +653,13 @@ async def chat_batch(req: BatchChatRequest, request: Request):
 
     results = await _asyncio.gather(*[_one(c) for c in req.calls])
     return {"results": results}
-
+    
+@router.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"error": "Invalid request format. Please check your input."}
+    )
 
 @router.post("/v1/vision")
 async def vision(req: VisionRequest, request: Request):
