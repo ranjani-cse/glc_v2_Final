@@ -22,6 +22,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponsefrom fastapi.exceptions import RequestValidationError  
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Request
 
 from glc import db
 from glc import providers as P
@@ -645,13 +646,20 @@ async def chat(req: ChatRequest, request: Request):
 
 
 @router.post("/v1/chat/batch")
-async def chat_batch(req: BatchChatRequest):
+async def chat_batch(request: Request):
+    import json
     try:
-        results = await _asyncio.gather(*[_one(c) for c in req.calls])
-        return results
-    except Exception as e:
+        body = await request.json()
+    except json.JSONDecodeError:
         raise HTTPException(400, "Invalid request format. Please check your input.")
-
+    
+    if "calls" not in body:
+        raise HTTPException(400, "Invalid request format. Please check your input.")
+    
+    # Convert to BatchChatRequest
+    req = BatchChatRequest(**body)
+    results = await _asyncio.gather(*[_one(c) for c in req.calls])
+    return results
 
     async def _one(call: ChatRequest):
         async with sem:
