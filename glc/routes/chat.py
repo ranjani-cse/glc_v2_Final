@@ -658,8 +658,7 @@ async def chat_batch(request: Request):
     
     # Convert to BatchChatRequest
     req = BatchChatRequest(**body)
-    results = await _asyncio.gather(*[_one(c) for c in req.calls])
-    return results
+    
 
     async def _one(call: ChatRequest):
         async with sem:
