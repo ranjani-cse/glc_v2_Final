@@ -825,13 +825,18 @@ async def capabilities(request: Request):
 
 @router.get("/v1/status")
 async def status(request: Request):
-    r = request.app.state.router
+     # Add authentication check here
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(401, "Authentication required")
+    
+    # Return only safe, non-sensitive information
     return {
-        "order": r.order,
-        "live": r.all_status(),
-        "today": db.aggregate(call_role="worker"),
-        "limits": LIMITS,
+        "status": "healthy",
+        "version": "1.0",
+        "timestamp": time.time()
     }
+
 
 
 @router.get("/v1/routers")
