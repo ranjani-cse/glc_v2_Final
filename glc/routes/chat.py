@@ -644,7 +644,6 @@ async def chat(req: ChatRequest, request: Request):
 
     raise HTTPException(503, f"all providers unavailable. attempts: {all_attempts}. last_error: {last_err}")
 
-
 @router.post("/v1/chat/batch")
 async def chat_batch(request: Request):
     import json
@@ -656,6 +655,7 @@ async def chat_batch(request: Request):
     if "calls" not in body:
         raise HTTPException(400, "Invalid request format. Please check your input.")
     
+    # Convert to BatchChatRequest
     req = BatchChatRequest(**body)
     
     sem = _asyncio.Semaphore(max(1, req.max_concurrency))
@@ -671,8 +671,6 @@ async def chat_batch(request: Request):
 
     results = await _asyncio.gather(*[_one(c) for c in req.calls])
     return {"results": results}
-
-
 
 @router.post("/v1/vision")
 async def vision(req: VisionRequest, request: Request):
