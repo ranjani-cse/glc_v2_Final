@@ -749,6 +749,23 @@ async def embed(req: EmbedRequest, request: Request):
 
 @router.get("/v1/embedders")
 async def list_embedders(request: Request):
+    # Add authentication check
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(401, "Authentication required")
+    
+    from glc import embedders as E
+    state = request.app.state
+    return {
+        "order": state.embed_order,
+        "models": {e.name: e.model for e in state.embedders},
+        "fixed_dim": E.EMBED_DIM,
+        "max_input_chars": E.MAX_INPUT_CHARS,
+        "backoff_steps_s": E.BACKOFF_STEPS,
+        "live": {e.name: e.state.snapshot() for e in state.embedders},
+        "today": db.aggregate(call_role="embed"),
+    }
+async def list_embedders(request: Request):
     from glc import embedders as E
 
     state = request.app.state
