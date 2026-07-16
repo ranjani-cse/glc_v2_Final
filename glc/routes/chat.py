@@ -861,5 +861,9 @@ async def routers(request: Request):
 
 
 @router.get("/v1/calls")
-async def calls(limit: int = 100, provider: str | None = None, status: str | None = None):
-    return db.recent(limit=limit, provider=provider, status=status)
+async def calls(request: Request, limit: int = 100, provider: str | None = None, status: str | None = None):
+    # Add authentication check
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(401, "Authentication required")
+    
